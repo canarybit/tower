@@ -1,0 +1,17 @@
+#cloud-config
+users:
+  - default
+  - name: <USERNAME>
+    sudo: false
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - <YOUR_SSH_RSA_KEY>
+
+timezone: UTC
+locale: "en_US.UTF-8"
+
+package_update: true
+package_upgrade: true
+package_reboot_if_required: true
+
+final_message: "==========   TOWER SETUP COMPLETED IN $UPTIME secs    =========="

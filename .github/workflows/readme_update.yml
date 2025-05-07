@@ -1,0 +1,39 @@
+name: Generate Terraform docs
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.ref }}
+
+    - name: Render Aws cVM Terraform docs and push changes back to PR
+      uses: terraform-docs/gh-actions@main
+      with:
+        working-dir: ./aws
+        output-file: README.md
+        output-method: inject
+        git-push: "true"
+
+    - name: Render Azure cVM Terraform docs and push changes back to PR
+      uses: terraform-docs/gh-actions@main
+      with:
+        working-dir: ./azure
+        output-file: README.md
+        output-method: inject
+        git-push: "true"
+
+    - name: Render GCP cVM Terraform docs and push changes back to PR
+      uses: terraform-docs/gh-actions@main
+      with:
+        working-dir: ./gcp
+        output-file: README.md
+        output-method: inject
+        git-push: "true"
