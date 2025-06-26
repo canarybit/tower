@@ -23,7 +23,8 @@ The Premium version contains the Terraform configurations for deploying Confiden
 Currently Tower supports the following virtualisation plaftorms:
 
 - [Libvirt/Qemu/KVM](https://libvirt.org/)
-- [Proxmox](https://github.com/proxmox)
+- [Proxmox](https://www.proxmox.com/)
+- [VMware vSphere](https://www.vmware.com/products/cloud-infrastructure/vsphere)
 
 Contact us at hi@canarybit.eu if you want to use Tower to deploy confidential VMs in on-prem deployments (that requires the Premium version).
 
