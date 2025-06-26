@@ -10,11 +10,11 @@ It implements Infrastructure as Code (IaC) and SecDevOps methodologies to provid
 
 ### Standard (Apache 2.0)
 The Standard version contains the Terraform/OpenTofu configurations for deploying Confidential VMs in **Public Clouds**. 
-Currently Tower supports the following public cloud providers:
+Currently Tower supports the following platforms and public cloud providers:
 
-- [AWS](/aws)
-- [Azure](/azure)
-- [GCP](/aws)
+- [AWS](/aws)      -> AMD SEV-SNP
+- [Azure](/azure)  -> AMD SEV-SNP
+- [GCP](/gcp)      -> AMD SEV-SNP | Intel TDX
 
 ### Premium
 The Premium version contains the Terraform configurations for deploying Confidential VMs **on-premise** and for **bare-metal** setups.
