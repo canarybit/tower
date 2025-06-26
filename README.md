@@ -1,8 +1,10 @@
 # Welcome to Tower
 
-Tower is a security orchestration tool to automatically provision, control and maintain Confidential VM instances. 
+[Tower](https://www.canarybit.eu/confidential-cloud-tower/) is a security orchestration tool to automatically provision, control and maintain Confidential VM instances. 
 Tower integrates with a wide list of Cloud Service Providers (CSPs), Private or Bare-metal infrastructure to offer full governance of the resources defining your Trusted Execution Environment (TEE).
 It implements Infrastructure as Code (IaC) and SecDevOps methodologies to provide integrity and the highest security standards to your workloads runtime.
+
+[Inspector](https://www.canarybit.eu/confidential-cloud-inspector/) supports remote attestation of deployed confidential VMs. Contact us at hi@canarybit.eu if you need support with remote attestation of confidential VMs.
 
 ## Licences
 
