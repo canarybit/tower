@@ -8,7 +8,7 @@ It implements Infrastructure as Code (IaC) and SecDevOps methodologies to provid
 
 ## Licences
 
-### Standard (Apache 2.0)
+### Standard (Apache-2.0)
 The Standard version contains the Terraform/OpenTofu configurations for deploying Confidential VMs in **Public Clouds**. 
 Currently Tower supports the following platforms and public cloud providers:
 
