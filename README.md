@@ -1,14 +1,14 @@
 # Welcome to Tower
 
-Tower is a security orchestration tool to automatically provision, control and maintain your Confidential VM instances.
+Tower is a security orchestration tool to automatically provision, control and maintain Confidential VM instances.
 
-It integrates with a wide list of Cloud Service Providers (CSPs), Private or Bare-metal infrastructure to offer full governance of the resources defining your Trusted Execution Environment (TEE).
+Tower integrates with a wide list of Cloud Service Providers (CSPs), Private or Bare-metal infrastructure to offer full governance of the resources defining your Trusted Execution Environment (TEE).
 
-It fully implements Infrastructure as Code (IaC) and SecDevOps methodologies to provide integrity and the highest security standards to your workloads runtime.
+It implements Infrastructure as Code (IaC) and SecDevOps methodologies to provide integrity and the highest security standards to your workloads runtime.
 
 ## Licences
 
-### Standard (FREE)
+### Standard (Apache 2.0)
 
 The Standard version contains the Terraform/OpenTofu configurations for deploying Confidential VMs in **Public Clouds**.
 
