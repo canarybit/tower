@@ -1,33 +1,27 @@
 # Welcome to Tower
 
-Tower is a security orchestration tool to automatically provision, control and maintain Confidential VM instances.
-
+Tower is a security orchestration tool to automatically provision, control and maintain Confidential VM instances. 
 Tower integrates with a wide list of Cloud Service Providers (CSPs), Private or Bare-metal infrastructure to offer full governance of the resources defining your Trusted Execution Environment (TEE).
-
 It implements Infrastructure as Code (IaC) and SecDevOps methodologies to provide integrity and the highest security standards to your workloads runtime.
 
 ## Licences
 
 ### Standard (Apache 2.0)
+The Standard version contains the Terraform/OpenTofu configurations for deploying Confidential VMs in **Public Clouds**. 
+Currently Tower supports the following public cloud providers:
 
-The Standard version contains the Terraform/OpenTofu configurations for deploying Confidential VMs in **Public Clouds**.
-
-Currently, the following Cloud providers are supported:
-
-- [Aws](/aws)
+- [AWS](/aws)
 - [Azure](/azure)
-- [Gcp](/aws)
+- [GCP](/aws)
 
 ### Premium
-
 The Premium version contains the Terraform configurations for deploying Confidential VMs **on-premise** and for **bare-metal** setups.
+Currently Tower supports the following virtualisation plaftorms:
 
-Currently, the following virtualisation plaftorms are supported:
+- [Libvirt](https://libvirt.org/)/[KVM](/https://linux-kvm.org/page/Main_Page)
+- [Proxmox](https://github.com/proxmox)
 
-- Libvirt/KVM
-- Proxmox
-
-Contact us at hi@canarybit.eu to get access to the Premium version.
+Contact us at hi@canarybit.eu if you want to use Tower to deploy confidential VMs in on-prem deployments (that requires the Premium version).
 
 ## General Requirements
 
