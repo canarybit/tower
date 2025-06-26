@@ -14,15 +14,15 @@ Currently Tower supports the following platforms and public cloud providers:
 
 | Cloud Provider/TEE Platform    | AMD SEV-SNP | Intel TDX |
 | -------- | ------- |------- |
-| [AWS](/aws)        | x    | upcoming    |
-| [Azure](/azure)        | x    | upcoming    |
-| [GCP](/gcp)        | x    | x    |
+| [AWS](/aws)        | yes    | upcoming    |
+| [Azure](/azure)        | yes    | upcoming    |
+| [GCP](/gcp)        | yes    | yes    |
 
 ### Premium
 The Premium version contains the Terraform configurations for deploying Confidential VMs **on-premise** and for **bare-metal** setups.
 Currently Tower supports the following virtualisation plaftorms:
 
-- [Libvirt](https://libvirt.org/)/[KVM](/https://linux-kvm.org/page/Main_Page)
+- [Libvirt/Qemu/KVM](https://libvirt.org/)
 - [Proxmox](https://github.com/proxmox)
 
 Contact us at hi@canarybit.eu if you want to use Tower to deploy confidential VMs in on-prem deployments (that requires the Premium version).
@@ -31,4 +31,4 @@ Contact us at hi@canarybit.eu if you want to use Tower to deploy confidential VM
 
 - [Terraform](https://developer.hashicorp.com/terraform) or [OpenTofu](https://opentofu.org/docs/intro/install/) installed;
 - Credentials to access your favourite Cloud Service Provider;
-- A SSH RSA key to access Confidential VM istances.
+- A SSH RSA key to access Confidential VM instances.
