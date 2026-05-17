@@ -35,7 +35,7 @@ write_files:
       Description=CanaryBit Remote Attestation
       
       [Service]
-      EnvironmentFile=/home/tower/tokens
+      EnvironmentFile=/home/${USERNAME}/tokens
       Environment="CBCLIENT_LOG_LEVEL=info"
       Environment="CBCLIENT_ENVIRONMENTS=${ENVIRONMENTS}"
       Environment="CBCLIENT_INSPECTOR_URL=${CBINSPECTOR_URL}"
@@ -65,7 +65,7 @@ write_files:
     content: |
       #!/bin/bash
 
-      cat /home/tower/tokens >> /etc/environment
+      cat /home/${USERNAME}/tokens >> /etc/environment
 
       set -a
       source /etc/environment
