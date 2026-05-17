@@ -49,4 +49,29 @@ resource "aws_instance" "cvm" {
     amd_sev_snp = strcontains(var.remote_attestation.environments, "snp") ? "enabled" : null // Enable AMD SEV-SNP
   }
 
+  # Enable ssh connection, create a file containing the cbtoken and launch the script
+  connection {
+    type = "ssh"
+    user = var.cvm_username
+    private_key = file(trimsuffix(var.cvm_ssh_pubkey,".pub"))
+    host = self.public_ip
+  }
+  provisioner "file" {
+    destination = "/home/${var.cvm_username}/tokens"
+    content = "CB_TOKENS='${data.http.cblogin.*.response_body[0]}'"
+  }
+  provisioner "file" {
+    destination = "/home/${var.cvm_username}/signing-key.pem"
+    content = tls_private_key.rsa-4096.private_key_pem_pkcs8
+  }
+  provisioner "remote-exec" {
+    inline = [
+      "cloud-init status --wait",
+      "sudo /etc/canarybit/launch-cbclient",
+    ]
+  }
+
+  lifecycle {
+    ignore_changes = [user_data]
+  }
 }

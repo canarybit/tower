@@ -13,7 +13,7 @@ locale: "en_US.UTF-8"
 
 package_update: true
 package_upgrade: true
-package_reboot_if_required: true
+package_reboot_if_required: false
 
 final_message: |
   ==========   CANARYBIT TOWER SETUP COMPLETED IN $UPTIME secs    ==========

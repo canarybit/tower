@@ -13,26 +13,12 @@ timezone: UTC
 
 package_update: true
 package_upgrade: true
-package_reboot_if_required: true
+package_reboot_if_required: false
 packages:
   - libtss2-dev
   - jq
 
 write_files:
-  # Set environment variables for cbclient systemd service
-  - path: /etc/canarybit/tokens
-    permissions: '0600'
-    defer: true
-    content: |
-      CB_TOKENS='${CB_TOKENS}'
-
-  # A signing key to identify the current cVM instance
-  - path: /etc/canarybit/signing-key.pem
-    defer: true
-    permissions: '0600'
-    content: |
-      ${SIGNING_KEY}
-
   # Custom policu for the current cVM instance (optional)
   - path: /etc/canarybit/custom-policy.rego
     defer: true
@@ -49,13 +35,13 @@ write_files:
       Description=CanaryBit Remote Attestation
       
       [Service]
-      EnvironmentFile=/etc/canarybit/tokens
+      EnvironmentFile=/home/tower/tokens
       Environment="CBCLIENT_LOG_LEVEL=info"
       Environment="CBCLIENT_ENVIRONMENTS=${ENVIRONMENTS}"
       Environment="CBCLIENT_INSPECTOR_URL=${CBINSPECTOR_URL}"
       Environment="CBCLIENT_ANNOTATIONS=${CBCLIENT_ANNOTATIONS}"
       Type=oneshot
-      ExecStart=/bin/bash -c '/usr/local/bin/cbclient attestation --token $$(cb login inspector) --key /etc/canarybit/signing-key.pem ${CUSTOM_POLICY_OPT}'
+      ExecStart=/bin/bash -c '/usr/local/bin/cbclient attestation --token $$(cb login inspector) --key /home/${USERNAME}/signing-key.pem ${CUSTOM_POLICY_OPT}'
 
   # Set a frequency for cbclient.service
   - path: /etc/systemd/system/cbclient.timer
@@ -79,19 +65,22 @@ write_files:
     content: |
       #!/bin/bash
 
+      cat /home/tower/tokens >> /etc/environment
+
+      set -a
+      source /etc/environment
+      set +a
+      
       # Download the CanaryBit CLI (cb) into /usr/local/bin
       curl -fsSL https://canarybit-public-binaries.s3.eu-west-1.amazonaws.com/cb-cli/${CBCLI_V}/cb-x86_64-unknown-linux-gnu -o cb; chmod +x cb; mv cb /usr/local/bin/cb
-
+            
       # Download the CanaryBit Inspector agent (cbclient) into /usr/local/bin
-      CB_TOKENS='${CB_TOKENS}' cb download cbclient ${CBCLIENT_V}/cbclient; chmod +x cbclient; mv cbclient /usr/local/bin/cbclient
+      cb download cbclient ${CBCLIENT_V}/cbclient; chmod +x cbclient; mv cbclient /usr/local/bin/cbclient
 
+      cb login inspector
       # Start cbclient as System service once and then a defined frequency
       systemctl start cbclient.service
       systemctl enable --now cbclient.timer
-
-runcmd:
-  # Launch cbclient as systemd service
-  - /etc/canarybit/launch-cbclient
 
 final_message: |
   ==========   CANARYBIT TOWER SETUP COMPLETED IN $UPTIME secs    ==========
