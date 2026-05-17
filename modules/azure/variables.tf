@@ -93,9 +93,9 @@ variable "cvm_ports_open" {
 }
 
 variable "cvm_ssh_enabled" {
-  description = "Enable/Disable SSH login"
+  description = "Enable/Disable SSH connection"
   type = bool
-  default = null
+  default = true
 }
 
 variable "cvm_annotations" {
