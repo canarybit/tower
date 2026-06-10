@@ -39,10 +39,10 @@ Currently, CanaryBit Tower supports the following platforms and public cloud pro
 
 The Premium version contains the Terraform configurations for deploying Confidential VMs **on-premise** and for **bare-metal** setups.
 
-Currently, Tower supports the following virtualisation plaftorms:
+Currently, Tower supports the following on-prem, virtualisation platforms:
 
 - [Libvirt/Qemu](https://libvirt.org/)
-- [Proxmox v8.5+](https://www.proxmox.com/)
+- [Proxmox v9.1+](https://www.proxmox.com/)
 - [VMware vSphere v9.0+](https://www.vmware.com/products/cloud-infrastructure/vsphere)
 
 ## Integrations
