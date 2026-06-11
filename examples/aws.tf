@@ -26,6 +26,12 @@ variable "cb_password" {
   sensitive = true
 }
 
+variable "allow_ssh" {
+  description = "Allow/Deny SSH connection"
+  type = bool
+  default = true
+}
+
 variable "n_of_cvm" {
   description = "Number of Confidential VMs to provision"
   type = number
@@ -44,7 +50,7 @@ module "confidential-vm" {
   // Confidential VM
   count = var.n_of_cvm
   cvm_name = "demo-cvm-${count.index}"
-  cvm_ssh_enabled = true
+  cvm_ssh_enabled = var.allow_ssh
   cvm_ssh_pubkey = "~/.ssh/id_rsa.pub"
   cvm_size = "c6a.xlarge"
 
