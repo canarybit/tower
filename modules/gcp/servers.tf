@@ -31,7 +31,7 @@ resource "google_compute_instance" "cvm" {
           CUSTOM_POLICY_OPT       = var.remote_attestation.custom_policy_file != null ? "--policy /etc/canarybit/custom-policy.rego" : ""
           CUSTOM_POLICY           = var.remote_attestation.custom_policy_file != null ? indent(6,file(var.remote_attestation.custom_policy_file)) : ""
           FREQUENCY               = var.remote_attestation.frequency
-          CBCLIENT_ANNOTATIONS    = replace(join(",", formatlist("%s=%s", keys(local.annotations), values(local.annotations))),"-","/")
+          CBCLIENT_ANNOTATIONS    = join(",", formatlist("%s=%s", keys(local.annotations), values(local.annotations)))
         }
       ) : templatefile("${path.module}/../../cloud-init/default.yml",
         {

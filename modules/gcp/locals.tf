@@ -1,6 +1,6 @@
 locals {
   annotations = merge(var.cvm_annotations, {
-    "canarybit-provisioner" = "tower"
+    "canarybit" = "tower"
   })
 
   // CVM OS info

@@ -34,28 +34,27 @@ variable "cvm_size" {
   }
 }
 
-///////////////////////
-// DEFAULTS
-///////////////////////
-
 variable "remote_attestation" {
   description = "Enable CanaryBit Remote Attestation"
   type = object({
     environments = string
     cbinspector_url = optional(string, "https://api.inspector.confidentialcloud.io")
-    cbclient_version = optional(string, "0.3.0")
+    cbclient_version = optional(string, "0.3.2")
     cbcli_version = optional(string, "0.2.5")
     signing_key = optional(string)
     custom_policy_file = optional(string)
     frequency = optional(string, "daily")
   })
-  default = null
 
   validation {
     condition = contains(["snp", "tdx"], var.remote_attestation.environments)
     error_message = "The value has to be one of the following: ['snp', 'tdx']"
   }
 }
+
+///////////////////////
+// DEFAULTS
+///////////////////////
 
 variable "cvm_os" {
   description = "URI of the OS image"
@@ -94,7 +93,7 @@ variable "cvm_ssh_source_ip" {
 }
 
 variable "cvm_annotations" {
-  description = "Custom Annotations in format \"<Namespace>\" = \"<Key>=<Value>\""
+  description = "Custom annotations in \"<Key>=<Value>\" format"
   type = map
   default = {}
 }
