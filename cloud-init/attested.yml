@@ -19,7 +19,7 @@ packages:
   - jq
 
 write_files:
-  # Custom policu for the current cVM instance (optional)
+  # Custom policy for the current cVM instance (optional)
   - path: /etc/canarybit/custom-policy.rego
     defer: true
     permissions: '0600'
