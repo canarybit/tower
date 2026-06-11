@@ -27,7 +27,7 @@ variable "cb_password" {
 }
 
 variable "n_of_cvm" {
-  description = "Number of Confidential VMs to deploy"
+  description = "Number of Confidential VMs to provision"
   type = number
   default = 1
 }
@@ -37,15 +37,12 @@ variable "n_of_cvm" {
 // ========================
 
 module "confidential-vm" {
-
   source = "canarybit/tower/canarybit//modules/aws"
-  
   cb_username = var.cb_username
   cb_password = var.cb_password
 
-  count = var.n_of_cvm
-
   // Confidential VM
+  count = var.n_of_cvm
   cvm_name = "demo-cvm-${count.index}"
   cvm_ssh_enabled = true
   cvm_ssh_pubkey = "~/.ssh/id_rsa.pub"
@@ -54,6 +51,8 @@ module "confidential-vm" {
   // Remote Attestation
   remote_attestation = {
     environments = "snp"
+    frequency = "daily"
+    custom_policy_file = "./my-policy.rego"
   }
 }
 

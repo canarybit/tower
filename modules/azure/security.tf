@@ -11,11 +11,11 @@ resource "azurerm_subnet_network_security_group_association" "default" {
 
 resource "azurerm_network_security_rule" "ssh" {
   count = var.cvm_ssh_enabled ? 1 : 0
-  name = "in-ssh"
+  name = "${var.cvm_name}-ssh"
   direction = "Inbound"
   access = "Allow"
   priority = 100
-  source_address_prefix = "*"
+  source_address_prefix = var.cvm_ssh_source_ip != null ? "${var.cvm_ssh_source_ip}/32" : "${chomp(data.http.my-public-ip.response_body)}/32"
   source_port_range = "*"
   destination_address_prefix = "*"
   destination_port_range = 22
@@ -24,7 +24,7 @@ resource "azurerm_network_security_rule" "ssh" {
   network_security_group_name = azurerm_network_security_group.default.name
 }
 
-resource "azurerm_network_security_rule" "default" {
+resource "azurerm_network_security_rule" "custom" {
   count = var.cvm_ports_open != "" ? length(var.cvm_ports_open) : 0
   name = "${var.cvm_name}-in-${element(var.cvm_ports_open, count.index)}"
   direction = "Inbound"

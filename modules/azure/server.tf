@@ -12,7 +12,6 @@ resource "azurerm_linux_virtual_machine" "cvm" {
         USERNAME                = var.cvm_username
         SSH_PUBKEY              = file(var.cvm_ssh_pubkey)
         // CanaryBit Remote Attestation
-        CB_TOKENS               = data.http.cblogin.*.response_body[0]
         CBINSPECTOR_URL         = var.remote_attestation.cbinspector_url
         CBCLIENT_V              = var.remote_attestation.cbclient_version
         CBCLI_V                 = var.remote_attestation.cbcli_version
@@ -20,7 +19,6 @@ resource "azurerm_linux_virtual_machine" "cvm" {
         CUSTOM_POLICY_OPT       = var.remote_attestation.custom_policy_file != null ? "--policy /etc/canarybit/custom-policy.rego" : ""
         CUSTOM_POLICY           = var.remote_attestation.custom_policy_file != null ? indent(6,file(var.remote_attestation.custom_policy_file)) : ""
         FREQUENCY               = var.remote_attestation.frequency
-        SIGNING_KEY             = indent(6,tls_private_key.rsa-4096.private_key_pem_pkcs8)
         CBCLIENT_ANNOTATIONS    = replace(join(",", formatlist("%s=%s", keys(local.annotations), values(local.annotations))),":","/")
       }
     )) : base64encode(templatefile("${path.module}/../../cloud-init/default.yml",
@@ -60,6 +58,28 @@ resource "azurerm_linux_virtual_machine" "cvm" {
     offer = local.cvm_os_urn[1]
     sku = local.cvm_os_urn[2]
     version = local.cvm_os_urn[3]
+  }
+
+  # Enable ssh connection, create a file containing the cbtoken and launch the script
+  connection {
+    type = "ssh"
+    user = var.cvm_username
+    private_key = file(trimsuffix(var.cvm_ssh_pubkey,".pub"))
+    host = self.public_ip_address
+  }
+  provisioner "file" {
+    destination = "/home/${var.cvm_username}/tokens"
+    content = "CB_TOKENS='${data.http.cblogin.*.response_body[0]}'"
+  }
+  provisioner "file" {
+    destination = "/home/${var.cvm_username}/signing-key.pem"
+    content = tls_private_key.rsa-4096.private_key_pem_pkcs8
+  }
+  provisioner "remote-exec" {
+    inline = [
+      "cloud-init status --wait",
+      "sudo /etc/canarybit/launch-cbclient",
+    ]
   }
 
   lifecycle {
