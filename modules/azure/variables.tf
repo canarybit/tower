@@ -98,6 +98,12 @@ variable "cvm_ssh_enabled" {
   default = true
 }
 
+variable "cvm_ssh_source_ip" {
+  description = "Source IP for SSH connection"
+  type = string
+  default = null
+}
+
 variable "cvm_annotations" {
   description = "Custom annotations in \"(<Namespace>:)<Key> \"=\" <Value>\" format"
   type = map

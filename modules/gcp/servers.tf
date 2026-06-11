@@ -24,7 +24,6 @@ resource "google_compute_instance" "cvm" {
           USERNAME                = var.cvm_username
           SSH_PUBKEY              = file(var.cvm_ssh_pubkey)
           // CanaryBit Remote Attestation
-          CB_TOKENS               = data.http.cblogin.*.response_body[0]
           CBINSPECTOR_URL         = var.remote_attestation.cbinspector_url
           CBCLIENT_V              = var.remote_attestation.cbclient_version
           CBCLI_V                 = var.remote_attestation.cbcli_version
@@ -32,7 +31,6 @@ resource "google_compute_instance" "cvm" {
           CUSTOM_POLICY_OPT       = var.remote_attestation.custom_policy_file != null ? "--policy /etc/canarybit/custom-policy.rego" : ""
           CUSTOM_POLICY           = var.remote_attestation.custom_policy_file != null ? indent(6,file(var.remote_attestation.custom_policy_file)) : ""
           FREQUENCY               = var.remote_attestation.frequency
-          SIGNING_KEY             = indent(6,tls_private_key.rsa-4096.private_key_pem_pkcs8)
           CBCLIENT_ANNOTATIONS    = replace(join(",", formatlist("%s=%s", keys(local.annotations), values(local.annotations))),"-","/")
         }
       ) : templatefile("${path.module}/../../cloud-init/default.yml",

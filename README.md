@@ -42,7 +42,7 @@ The Premium version contains the Terraform configurations for deploying Confiden
 Currently, Tower supports the following on-prem, virtualisation platforms:
 
 - [Libvirt/Qemu](https://libvirt.org/)
-- [Proxmox v9.1+](https://www.proxmox.com/)
+- [Proxmox v8.5+](https://www.proxmox.com/)
 - [VMware vSphere v9.0+](https://www.vmware.com/products/cloud-infrastructure/vsphere)
 
 ## Integrations

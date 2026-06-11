@@ -6,8 +6,8 @@ output "cvm-info" {
   Size/Family:    ${google_compute_instance.cvm.machine_type} (Confidential) 
   OS:             ${element(local.cvm_running_os, length(local.cvm_running_os)-1)}
   Disk:           0 GB
-  PublicIp:       ${google_compute_instance.cvm.network_interface.0.access_config.0.nat_ip}
-  SshEnabled:     ${var.cvm_ssh_enabled}
+  Public IP:      ${google_compute_instance.cvm.network_interface.0.access_config.0.nat_ip}
+  SSH Enabled:    ${var.cvm_ssh_enabled}
   Username:       ${var.cvm_username}
 
   Secure Boot:    ${google_compute_instance.cvm.shielded_instance_config.0.enable_secure_boot}

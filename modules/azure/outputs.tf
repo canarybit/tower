@@ -6,8 +6,8 @@ output "cvm-info" {
   Size/Family:    ${var.cvm_size} (Confidential) 
   OS:             ${var.cvm_os}
   Disk:           ${var.cvm_disk_size_gb} GB 
-  PublicIp:       ${azurerm_linux_virtual_machine.cvm.public_ip_address}
-  SshEnabled:     ${var.cvm_ssh_enabled}
+  Public IP:      ${azurerm_linux_virtual_machine.cvm.public_ip_address}
+  SSH Enabled:    ${var.cvm_ssh_enabled}
   Username:       ${var.cvm_username}
   
   Secure Boot:    ${azurerm_linux_virtual_machine.cvm.secure_boot_enabled}
