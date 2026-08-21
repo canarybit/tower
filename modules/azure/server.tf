@@ -8,22 +8,22 @@ resource "azurerm_linux_virtual_machine" "cvm" {
   // Select the right cloud-init: default or with Remote Attestation support.
   user_data = var.remote_attestation != null ? base64encode(templatefile("${path.module}/../../cloud-init/attested.yml",
       {
-        HOSTNAME                = var.cvm_name
-        USERNAME                = var.cvm_username
-        SSH_PUBKEY              = file(var.cvm_ssh_pubkey)
+        HOSTNAME                           = var.cvm_name
+        USERNAME                           = var.cvm_username
+        SSH_PUBKEY                         = file(var.cvm_ssh_pubkey)
         // CanaryBit Remote Attestation
-        CBINSPECTOR_URL         = var.remote_attestation.cbinspector_url
-        CBCLIENT_V              = var.remote_attestation.cbclient_version
-        CBCLI_V                 = var.remote_attestation.cbcli_version
-        ENVIRONMENTS            = var.remote_attestation.environments
-        CUSTOM_POLICY_OPT       = var.remote_attestation.custom_policy_file != null ? "--policy /etc/canarybit/custom-policy.rego" : ""
-        CUSTOM_POLICY           = var.remote_attestation.custom_policy_file != null ? indent(6,file(var.remote_attestation.custom_policy_file)) : ""
-        FREQUENCY               = var.remote_attestation.frequency
-        CBCLIENT_ANNOTATIONS    = join(",", formatlist("%s=%s", keys(local.annotations), values(local.annotations)))
+        CB_INSPECTOR_URL                   = var.remote_attestation.cb_inspector_url
+        CB_INSPECTOR_CLIENT_V              = var.remote_attestation.cb_inspector_client_version
+        CBCLI_V                            = var.remote_attestation.cbcli_version
+        ENVIRONMENTS                       = var.remote_attestation.environments
+        CUSTOM_POLICY_OPT                  = var.remote_attestation.custom_policy_file != null ? "--policy /etc/canarybit/custom-policy.rego" : ""
+        CUSTOM_POLICY                      = var.remote_attestation.custom_policy_file != null ? indent(6,file(var.remote_attestation.custom_policy_file)) : ""
+        FREQUENCY                          = var.remote_attestation.frequency
+        CB_INSPECTOR_CLIENT_ANNOTATIONS    = join(",", formatlist("%s=%s", keys(local.annotations), values(local.annotations)))
       }
     )) : base64encode(templatefile("${path.module}/../../cloud-init/default.yml",
       {
-        HOSTNAME           = var.cvm_name       
+        HOSTNAME           = var.cvm_name
         USERNAME           = var.cvm_username
         SSH_PUBKEY         = file(var.cvm_ssh_pubkey)
       }
@@ -78,7 +78,7 @@ resource "azurerm_linux_virtual_machine" "cvm" {
   provisioner "remote-exec" {
     inline = [
       "cloud-init status --wait",
-      "sudo /etc/canarybit/launch-cbclient",
+      "sudo /etc/canarybit/launch-cb-inspector-client",
     ]
   }
 
