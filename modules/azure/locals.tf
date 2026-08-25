@@ -1,6 +1,7 @@
 locals {
   annotations = merge(var.cvm_annotations, {
     "canarybit" = "tower"
+    "resource"  = "cvm"
   })
 
   // Split the URN references from cvm_os variable to build the source image reference
