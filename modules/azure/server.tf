@@ -3,32 +3,10 @@ resource "azurerm_linux_virtual_machine" "cvm" {
   resource_group_name = data.azurerm_resource_group.default.name
   location = local.az_region
   size = var.cvm_size
-  tags = local.annotations
+  tags = local.annotations // TODO: add enclave id here?
 
   // Select the right cloud-init: default or with Remote Attestation support.
-  user_data = var.remote_attestation != null ? base64encode(templatefile("${path.module}/../../cloud-init/attested.yml",
-      {
-        HOSTNAME                           = var.cvm_name
-        USERNAME                           = var.cvm_username
-        SSH_PUBKEY                         = file(var.cvm_ssh_pubkey)
-        // CanaryBit Remote Attestation
-        CB_INSPECTOR_URL                   = var.remote_attestation.cb_inspector_url
-        CB_INSPECTOR_CLIENT_V              = var.remote_attestation.cb_inspector_client_version
-        CBCLI_V                            = var.remote_attestation.cbcli_version
-        ENVIRONMENTS                       = var.remote_attestation.environments
-        CUSTOM_POLICY_OPT                  = var.remote_attestation.custom_policy_file != null ? "--policy /etc/canarybit/custom-policy.rego" : ""
-        CUSTOM_POLICY                      = var.remote_attestation.custom_policy_file != null ? indent(6,file(var.remote_attestation.custom_policy_file)) : ""
-        FREQUENCY                          = var.remote_attestation.frequency
-        CB_INSPECTOR_CLIENT_ANNOTATIONS    = join(",", formatlist("%s=%s", keys(local.annotations), values(local.annotations)))
-      }
-    )) : base64encode(templatefile("${path.module}/../../cloud-init/default.yml",
-      {
-        HOSTNAME           = var.cvm_name
-        USERNAME           = var.cvm_username
-        SSH_PUBKEY         = file(var.cvm_ssh_pubkey)
-      }
-    )
-  )
+  user_data = base64encode(module.commons.cloud_init_user_data)
 
   # The required AZ approach to add a VM user in addition to cloud-init config
   admin_username = var.cvm_username
@@ -69,11 +47,11 @@ resource "azurerm_linux_virtual_machine" "cvm" {
   }
   provisioner "file" {
     destination = "/home/${var.cvm_username}/tokens"
-    content = "CB_TOKENS='${data.http.cblogin.*.response_body[0]}'"
+    content = "CB_TOKENS='${module.commons.cb_tokens}'"
   }
   provisioner "file" {
     destination = "/home/${var.cvm_username}/signing-key.pem"
-    content = tls_private_key.rsa-4096.private_key_pem_pkcs8
+    content = module.commons.signing_key_pem
   }
   provisioner "remote-exec" {
     inline = [

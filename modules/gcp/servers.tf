@@ -1,7 +1,7 @@
 resource "google_compute_instance" "cvm" {
   name = var.cvm_name
   machine_type = var.cvm_size
-  labels = local.annotations
+  labels = local.annotations // TODO: add enclave id here?
 
   boot_disk {
     initialize_params {
@@ -18,28 +18,7 @@ resource "google_compute_instance" "cvm" {
 
   metadata = {
     // WARNING: it's user-data with "-" and not "_" as for other providers. No base64encode encoding.
-    user-data = var.remote_attestation != null ? templatefile("${path.module}/../../cloud-init/attested.yml",
-        {
-          HOSTNAME                           = var.cvm_name
-          USERNAME                           = var.cvm_username
-          SSH_PUBKEY                         = file(var.cvm_ssh_pubkey)
-          // CanaryBit Remote Attestation
-          CB_INSPECTOR_URL                   = var.remote_attestation.cb_inspector_url
-          CB_INSPECTOR_CLIENT_V              = var.remote_attestation.cb_inspector_client_version
-          CBCLI_V                            = var.remote_attestation.cbcli_version
-          ENVIRONMENTS                       = var.remote_attestation.environments
-          CUSTOM_POLICY_OPT                  = var.remote_attestation.custom_policy_file != null ? "--policy /etc/canarybit/custom-policy.rego" : ""
-          CUSTOM_POLICY                      = var.remote_attestation.custom_policy_file != null ? indent(6,file(var.remote_attestation.custom_policy_file)) : ""
-          FREQUENCY                          = var.remote_attestation.frequency
-          CB_INSPECTOR_CLIENT_ANNOTATIONS    = join(",", formatlist("%s=%s", keys(local.annotations), values(local.annotations)))
-        }
-      ) : templatefile("${path.module}/../../cloud-init/default.yml",
-        {
-          HOSTNAME           = var.cvm_name
-          USERNAME           = var.cvm_username
-          SSH_PUBKEY         = file(var.cvm_ssh_pubkey)
-        }
-    )
+    user-data = module.commons.cloud_init_user_data
   }
 
   shielded_instance_config {
@@ -67,11 +46,11 @@ resource "google_compute_instance" "cvm" {
   }
   provisioner "file" {
     destination = "/home/${var.cvm_username}/tokens"
-    content = "CB_TOKENS='${data.http.cblogin.*.response_body[0]}'"
+    content = "CB_TOKENS='${module.commons.cb_tokens}'"
   }
   provisioner "file" {
     destination = "/home/${var.cvm_username}/signing-key.pem"
-    content = tls_private_key.rsa-4096.private_key_pem_pkcs8
+    content = module.commons.signing_key_pem
   }
   provisioner "remote-exec" {
     inline = [
