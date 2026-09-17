@@ -6,7 +6,7 @@ module "commons" {
 
   cvm_name     = var.cvm_name
   cvm_username = var.cvm_username
-  cvm_platform = var.remote_attestation.environments // TODO
+  cvm_platform = var.cvm_cpu_platform.type
 
   cvm_annotations = var.cvm_annotations
 
@@ -15,4 +15,5 @@ module "commons" {
   cloud_init_packages = []
 
   cloud_init = var.cloud_init
+  use_provisioner = true
 }
