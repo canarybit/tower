@@ -97,6 +97,18 @@ variable "cvm_ssh_enabled" {
   default = true
 }
 
+variable "kernel_update_enabled" {
+  description = "Enable the automatic kernel update after the CVM is created"
+  type = bool
+  default = false
+}
+
+variable "kernel_version" {
+  description = "Optional kernel package version. If unset, the latest available kernel is installed."
+  type = string
+  default = null
+}
+
 variable "cvm_ssh_source_ip" {
   description = "Source IP for SSH connection"
   type = string
