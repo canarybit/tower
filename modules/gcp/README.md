@@ -78,7 +78,7 @@ No modules.
 | <a name="input_cvm_ssh_pubkey"></a> [cvm\_ssh\_pubkey](#input\_cvm\_ssh\_pubkey) | Path to the public key used for SSH connection | `string` | n/a | yes |
 | <a name="input_cvm_ssh_source_ip"></a> [cvm\_ssh\_source\_ip](#input\_cvm\_ssh\_source\_ip) | Source IP for SSH connection | `string` | `null` | no |
 | <a name="input_cvm_username"></a> [cvm\_username](#input\_cvm\_username) | CVM Username for SSH login | `string` | `"tower"` | no |
-| <a name="input_kernel_update_enabled"></a> [kernel\_update\_enabled](#input\_kernel\_update\_enabled) | Enable the automatic kernel update for supported Linux distributions | `bool` | `false` | no |
+| <a name="input_kernel_update_enabled"></a> [kernel\_update\_enabled](#input\_kernel\_update\_enabled) | Enable the automatic kernel update after the CVM is created | `bool` | `false` | no |
 | <a name="input_kernel_version"></a> [kernel\_version](#input\_kernel\_version) | Optional kernel package version. If unset, the latest available kernel is installed. | `string` | `null` | no |
 | <a name="input_remote_attestation"></a> [remote\_attestation](#input\_remote\_attestation) | Enable CanaryBit Remote Attestation | <pre>object({<br/>    environments = string<br/>    cb_inspector_url = optional(string, "https://api.inspector.confidentialcloud.io")<br/>    cb_inspector_client_version = optional(string, "0.1.0")<br/>    cbcli_version = optional(string, "0.2.6")<br/>    signing_key = optional(string)<br/>    custom_policy_file = optional(string)<br/>    frequency = optional(string, "daily")<br/>  })</pre> | n/a | yes |
 
