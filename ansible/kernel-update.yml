@@ -1,0 +1,397 @@
+---
+# Usage:
+#   Latest kernel (default):
+#     ansible-playbook -i inventory kernel-update.yml
+#   Specific kernel:
+#     Ubuntu/Debian: -e kernel_version=6.8.0-45              (flavor default: generic; use -e kernel_flavor=azure/aws if needed)
+#     RHEL:          -e kernel_version=5.14.0-362.8.1.el9_3
+#     SUSE:          -e kernel_version=5.14.21-150500.55.65.1   (package version of kernel-default)
+- name: Update kernel and reboot safely (Ubuntu / RHEL / SUSE)
+  hosts: vm
+  become: true
+  vars:
+    reboot_after_update: true
+    kernel_version: ""          # empty = latest kernel; otherwise pin to this version
+    kernel_flavor: ""           # Debian/Ubuntu default: generic | SUSE default: default
+    kernel_extra_packages: []   # optional extra package names to install (Debian family, pinned mode)
+
+  tasks:
+
+    - name: Wait for cloud-init to finish (if present)
+      command: cloud-init status --wait
+      register: cloud_init_status
+      changed_when: false
+      failed_when: false
+
+    - name: Record running kernel before update
+      command: uname -r
+      register: kernel_before
+      changed_when: false
+
+    # ---------------------------------------------------------------
+    # Work out target kernel (only when a specific version is requested)
+    # ---------------------------------------------------------------
+    - name: Set pinned-kernel facts
+      set_fact:
+        kernel_pinned: "{{ kernel_version | length > 0 }}"
+        kernel_flavor_eff: >-
+          {{ kernel_flavor if kernel_flavor | length > 0
+             else ('generic' if ansible_facts['os_family'] == 'Debian' else 'default') }}
+
+    - name: Compute target uname string for pinned kernel
+      set_fact:
+        kernel_uname_target: >-
+          {%- if ansible_facts['os_family'] == 'Debian' -%}
+          {{ kernel_version }}-{{ kernel_flavor_eff }}
+          {%- elif ansible_facts['os_family'] == 'RedHat' -%}
+          {{ kernel_version }}.{{ ansible_facts['architecture'] }}
+          {%- else -%}
+          {{ kernel_version | regex_replace('\.[0-9]+$', '') }}-{{ kernel_flavor_eff }}
+          {%- endif -%}
+      when: kernel_pinned | bool
+
+    - name: Show kernel target
+      debug:
+        msg: "{{ ('Pinning kernel to ' + kernel_uname_target) if kernel_pinned | bool else 'Updating to latest kernel' }}"
+
+    # ---------------------------------------------------------------
+    # Debian / Ubuntu
+    # ---------------------------------------------------------------
+    - name: Debian family | stop unattended-upgrades to avoid lock conflicts
+      systemd:
+        name: unattended-upgrades
+        state: stopped
+      failed_when: false
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Debian family | wait for apt/dpkg lock to be released
+      shell: |
+        while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do sleep 2; done
+      changed_when: false
+      timeout: 300
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Debian family | force needrestart to run non-interactively
+      lineinfile:
+        path: /etc/needrestart/needrestart.conf
+        regexp: "^#?\\$nrconf\\{restart\\}"
+        line: "$nrconf{restart} = 'a';"
+        create: true
+      failed_when: false
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Debian family | update apt cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+        NEEDRESTART_MODE: a
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Debian family | update to latest kernel
+      apt:
+        name: "linux-{{ kernel_flavor_eff }}"
+        state: latest
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+        NEEDRESTART_MODE: a
+      register: kernel_update_debian
+      when:
+        - ansible_facts['os_family'] == "Debian"
+        - not (kernel_pinned | bool)
+
+    - name: Debian family | install specific kernel version
+      apt:
+        name: "{{ ['linux-image-' + kernel_uname_target, 'linux-modules-' + kernel_uname_target, 'linux-headers-' + kernel_uname_target] + kernel_extra_packages }}"
+        state: present
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+        NEEDRESTART_MODE: a
+      register: kernel_update_debian_pinned
+      when:
+        - ansible_facts['os_family'] == "Debian"
+        - kernel_pinned | bool
+
+    - name: Debian family | find GRUB menu entry for pinned kernel
+      shell: |
+        cfg=/boot/grub/grub.cfg
+        ent=$(grep -oP "^\s*menuentry '\K[^']*with Linux {{ kernel_uname_target }}(?=')" $cfg | head -1)
+        if grep -qP "^\s+menuentry '[^']*with Linux {{ kernel_uname_target }}'" $cfg; then
+          sub=$(grep -oP "^submenu '\K[^']+" $cfg | head -1)
+          echo "$sub>$ent"
+        else
+          echo "$ent"
+        fi
+      register: grub_entry_debian
+      changed_when: false
+      failed_when: false
+      when:
+        - ansible_facts['os_family'] == "Debian"
+        - kernel_pinned | bool
+
+    # -fde (UKI) kernels have no GRUB entries: each kernel gets its own UEFI boot
+    # entry ("Ubuntu with kernel <ver>") and BootOrder decides which one boots.
+    - name: Debian family | ensure efibootmgr is installed (UKI/-fde kernels)
+      apt:
+        name: efibootmgr
+        state: present
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+        NEEDRESTART_MODE: a
+      when:
+        - ansible_facts['os_family'] == "Debian"
+        - kernel_pinned | bool
+        - grub_entry_debian.stdout | trim | length == 0
+
+    - name: Debian family | find UEFI boot entry for pinned kernel
+      shell: |
+        efibootmgr | grep -oP "^Boot\K[0-9A-Fa-f]{4}(?=\*?\s.*with kernel {{ kernel_uname_target }}(\s|$))" | head -1
+      register: efi_entry_debian
+      changed_when: false
+      failed_when: efi_entry_debian.stdout | trim | length == 0
+      when:
+        - ansible_facts['os_family'] == "Debian"
+        - kernel_pinned | bool
+        - grub_entry_debian.stdout | trim | length == 0
+
+    - name: Debian family | move pinned kernel to the front of UEFI BootOrder
+      shell: |
+        num="{{ efi_entry_debian.stdout | trim }}"
+        order=$(efibootmgr | sed -n 's/^BootOrder: //p')
+        rest=$(echo "$order" | tr ',' '\n' | grep -v "^$num$" | paste -sd, -)
+        new="$num${rest:+,$rest}"
+        if [ "$order" = "$new" ]; then
+          echo UNCHANGED
+        else
+          efibootmgr -o "$new" >/dev/null && echo CHANGED
+        fi
+      register: efi_bootorder_debian
+      changed_when: efi_bootorder_debian.stdout | trim == 'CHANGED'
+      when:
+        - ansible_facts['os_family'] == "Debian"
+        - kernel_pinned | bool
+        - grub_entry_debian.stdout | trim | length == 0
+
+    - name: Debian family | set GRUB default to pinned kernel
+      lineinfile:
+        path: /etc/default/grub
+        regexp: '^GRUB_DEFAULT='
+        line: 'GRUB_DEFAULT="{{ grub_entry_debian.stdout | trim }}"'
+      register: grub_default_debian
+      when:
+        - ansible_facts['os_family'] == "Debian"
+        - kernel_pinned | bool
+        - grub_entry_debian.stdout | trim | length > 0
+
+    - name: Debian family | regenerate GRUB config
+      command: update-grub
+      when:
+        - ansible_facts['os_family'] == "Debian"
+        - kernel_pinned | bool
+        - grub_default_debian is changed
+
+    - name: Debian family | check if reboot is required
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required_debian
+      when: ansible_facts['os_family'] == "Debian"
+
+    # ---------------------------------------------------------------
+    # RHEL / CentOS / Rocky / Alma (os_family == "RedHat")
+    # ---------------------------------------------------------------
+    - name: RedHat family | wait for rpm/dnf lock to be released
+      shell: |
+        while fuser /var/lib/rpm/.rpm.lock >/dev/null 2>&1 || pgrep -x dnf >/dev/null 2>&1 || pgrep -x yum >/dev/null 2>&1; do
+          sleep 2
+        done
+      changed_when: false
+      timeout: 300
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: RedHat family | ensure dnf-utils / yum-utils present (for needs-restarting)
+      package:
+        name: "{{ 'dnf-utils' if ansible_facts['pkg_mgr'] == 'dnf' else 'yum-utils' }}"
+        state: present
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: RedHat family | update all packages including kernel (latest)
+      package:
+        name: "*"
+        state: latest
+      register: kernel_update_redhat
+      when:
+        - ansible_facts['os_family'] == "RedHat"
+        - not (kernel_pinned | bool)
+
+    - name: RedHat family | install specific kernel version
+      package:
+        name: "kernel-{{ kernel_version }}"
+        state: present
+      register: kernel_update_redhat_pinned
+      when:
+        - ansible_facts['os_family'] == "RedHat"
+        - kernel_pinned | bool
+
+    - name: RedHat family | set pinned kernel as default boot entry
+      command: "grubby --set-default /boot/vmlinuz-{{ kernel_uname_target }}"
+      changed_when: true
+      when:
+        - ansible_facts['os_family'] == "RedHat"
+        - kernel_pinned | bool
+
+    - name: RedHat family | check if reboot is required (needs-restarting -r)
+      command: needs-restarting -r
+      register: reboot_check_redhat
+      changed_when: false
+      failed_when: false
+      when: ansible_facts['os_family'] == "RedHat"
+
+    # needs-restarting -r returns rc=1 when a reboot IS required
+    - name: RedHat family | set reboot_required fact
+      set_fact:
+        reboot_required_redhat: "{{ reboot_check_redhat.rc == 1 }}"
+      when: ansible_facts['os_family'] == "RedHat"
+
+    # ---------------------------------------------------------------
+    # SUSE / openSUSE / SLES (os_family == "Suse")
+    # ---------------------------------------------------------------
+    - name: Suse family | wait for zypper lock to be released
+      shell: |
+        while fuser /var/run/zypp.pid >/dev/null 2>&1; do sleep 2; done
+      changed_when: false
+      timeout: 300
+      when: ansible_facts['os_family'] == "Suse"
+
+    - name: Suse family | refresh repos
+      community.general.zypper_repository:
+        repo: "*"
+        runrefresh: true
+      failed_when: false
+      when: ansible_facts['os_family'] == "Suse"
+
+    - name: Suse family | update kernel-default to latest
+      community.general.zypper:
+        name: "kernel-{{ kernel_flavor_eff }}"
+        state: latest
+        update_cache: true
+      register: kernel_update_suse
+      when:
+        - ansible_facts['os_family'] == "Suse"
+        - not (kernel_pinned | bool)
+
+    - name: Suse family | install specific kernel version
+      community.general.zypper:
+        name: "kernel-{{ kernel_flavor_eff }}={{ kernel_version }}"
+        state: present
+        oldpackage: true
+        update_cache: true
+      register: kernel_update_suse_pinned
+      when:
+        - ansible_facts['os_family'] == "Suse"
+        - kernel_pinned | bool
+
+    - name: Suse family | find GRUB menu entry for pinned kernel
+      shell: |
+        cfg=/boot/grub2/grub.cfg
+        ent=$(grep -oP "^\s*menuentry '\K[^']*with Linux {{ kernel_uname_target }}(?=')" $cfg | head -1)
+        if grep -qP "^\s+menuentry '[^']*with Linux {{ kernel_uname_target }}'" $cfg; then
+          sub=$(grep -oP "^submenu '\K[^']+" $cfg | head -1)
+          echo "$sub>$ent"
+        else
+          echo "$ent"
+        fi
+      register: grub_entry_suse
+      changed_when: false
+      failed_when: grub_entry_suse.stdout | trim | length == 0 or grub_entry_suse.stdout | trim == ">"
+      when:
+        - ansible_facts['os_family'] == "Suse"
+        - kernel_pinned | bool
+
+    - name: Suse family | set pinned kernel as default boot entry
+      command: "grub2-set-default '{{ grub_entry_suse.stdout | trim }}'"
+      changed_when: true
+      when:
+        - ansible_facts['os_family'] == "Suse"
+        - kernel_pinned | bool
+
+    - name: Suse family | check if reboot is required (zypper ps -s)
+      command: zypper ps -s
+      register: reboot_check_suse
+      changed_when: false
+      failed_when: false
+      when: ansible_facts['os_family'] == "Suse"
+
+    - name: Suse family | set reboot_required fact
+      set_fact:
+        reboot_required_suse: "{{ 'Reboot is suggested' in reboot_check_suse.stdout or 'Reboot required' in reboot_check_suse.stdout }}"
+      when: ansible_facts['os_family'] == "Suse"
+
+    # ---------------------------------------------------------------
+    # Unified reboot handling
+    # ---------------------------------------------------------------
+    - name: Set unified reboot_required fact
+      set_fact:
+        reboot_required: >-
+          {%- if kernel_pinned | bool -%}
+          {{ kernel_before.stdout | trim != kernel_uname_target }}
+          {%- else -%}
+          {{ (reboot_required_debian.stat.exists | default(false))
+             or (reboot_required_redhat | default(false))
+             or (reboot_required_suse | default(false)) }}
+          {%- endif -%}
+
+    - name: Reboot the VM if required
+      reboot:
+        msg: "Rebooting after kernel update via Ansible"
+        connect_timeout: 20
+        reboot_timeout: 600
+        pre_reboot_delay: 5
+        post_reboot_delay: 30
+        test_command: uptime
+      when:
+        - reboot_after_update | bool
+        - reboot_required | bool
+
+    - name: Wait for host to come back and be reachable
+      wait_for_connection:
+        connect_timeout: 20
+        sleep: 5
+        delay: 10
+        timeout: 300
+      when:
+        - reboot_after_update | bool
+        - reboot_required | bool
+
+    - name: Record running kernel after reboot
+      command: uname -r
+      register: kernel_after
+      changed_when: false
+      when:
+        - reboot_after_update | bool
+        - reboot_required | bool
+
+    - name: Verify host booted into the pinned kernel
+      assert:
+        that:
+          - kernel_after.stdout | trim == kernel_uname_target
+        fail_msg: "Expected kernel {{ kernel_uname_target }} but running {{ kernel_after.stdout | default('unknown') }}"
+        success_msg: "Running pinned kernel {{ kernel_uname_target }}"
+      when:
+        - kernel_pinned | bool
+        - reboot_after_update | bool
+        - reboot_required | bool
+
+    - name: Print kernel version before and after
+      debug:
+        msg: >-
+          OS family: {{ ansible_facts['os_family'] }} |
+          Kernel before: {{ kernel_before.stdout }}
+          {{ ' -> after: ' + kernel_after.stdout if (reboot_after_update | bool and reboot_required | bool) else '(no reboot performed / not required)' }}
+
+    - name: Debian family | restart unattended-upgrades
+      systemd:
+        name: unattended-upgrades
+        state: started
+      failed_when: false
+      when: ansible_facts['os_family'] == "Debian"
