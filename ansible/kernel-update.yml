@@ -224,11 +224,30 @@
         - ansible_facts['os_family'] == "RedHat"
         - not (kernel_pinned | bool)
 
-    - name: RedHat family | install specific kernel version
-      package:
-        name: "kernel-{{ kernel_version }}"
+    - name: RedHat family | install specific kernel version (exact NEVRA, arch-qualified)
+      dnf:
+        name: "kernel-{{ kernel_uname_target }}"
         state: present
+        allow_downgrade: true
       register: kernel_update_redhat_pinned
+      when:
+        - ansible_facts['os_family'] == "RedHat"
+        - kernel_pinned | bool
+        - ansible_facts['pkg_mgr'] == "dnf"
+
+    - name: RedHat family | install specific kernel version (exact NEVRA, arch-qualified, yum fallback)
+      yum:
+        name: "kernel-{{ kernel_uname_target }}"
+        state: present
+      register: kernel_update_redhat_pinned_yum
+      when:
+        - ansible_facts['os_family'] == "RedHat"
+        - kernel_pinned | bool
+        - ansible_facts['pkg_mgr'] != "dnf"
+
+    - name: RedHat family | verify installed kernel matches requested version exactly
+      command: "rpm -q kernel-{{ kernel_uname_target }}"
+      changed_when: false
       when:
         - ansible_facts['os_family'] == "RedHat"
         - kernel_pinned | bool
