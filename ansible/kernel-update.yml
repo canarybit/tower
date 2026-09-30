@@ -55,6 +55,47 @@
         msg: "{{ ('Pinning kernel to ' + kernel_uname_target) if kernel_pinned | bool else 'Updating to latest kernel' }}"
 
     # ---------------------------------------------------------------
+    # Guard: only allow a pinned kernel_version that is NEWER than the
+    # kernel currently running. Blocks downgrades and re-installs of the
+    # same version before any package changes are made.
+    # ---------------------------------------------------------------
+    - name: Determine currently running kernel version in a comparable (bare) form
+      set_fact:
+        kernel_current_bare: >-
+          {%- if ansible_facts['os_family'] == 'Debian' -%}
+          {{ kernel_before.stdout | trim | regex_replace('-' ~ kernel_flavor_eff ~ '$', '') }}
+          {%- elif ansible_facts['os_family'] == 'RedHat' -%}
+          {{ kernel_before.stdout | trim | regex_replace('\.' ~ ansible_facts['architecture'] ~ '$', '') }}
+          {%- else -%}
+          {{ kernel_before.stdout | trim | regex_replace('-' ~ kernel_flavor_eff ~ '$', '') }}
+          {%- endif -%}
+      when: kernel_pinned | bool
+
+    - name: Compare requested kernel version against the currently running kernel
+      shell: |
+        current="{{ kernel_current_bare }}"
+        target="{{ kernel_version }}"
+        highest=$(printf '%s\n%s\n' "$current" "$target" | sort -V | tail -n1)
+        if [ "$highest" = "$target" ] && [ "$target" != "$current" ]; then
+          echo NEWER
+        else
+          echo NOT_NEWER
+        fi
+      register: kernel_version_compare
+      changed_when: false
+      when: kernel_pinned | bool
+
+    - name: Refuse to proceed unless the requested kernel is newer than the running kernel
+      assert:
+        that:
+          - kernel_version_compare.stdout | trim == 'NEWER'
+        fail_msg: >-
+          Requested kernel {{ kernel_version }} is not newer than the currently running kernel
+          ({{ kernel_current_bare }}). Refusing to downgrade or reinstall the same version.
+        success_msg: "Requested kernel {{ kernel_version }} is newer than the running kernel ({{ kernel_current_bare }}). Proceeding."
+      when: kernel_pinned | bool
+
+    # ---------------------------------------------------------------
     # Debian / Ubuntu
     # ---------------------------------------------------------------
     - name: Debian family | stop unattended-upgrades to avoid lock conflicts
@@ -252,12 +293,72 @@
         - ansible_facts['os_family'] == "RedHat"
         - kernel_pinned | bool
 
-    - name: RedHat family | set pinned kernel as default boot entry
-      command: "grubby --set-default /boot/vmlinuz-{{ kernel_uname_target }}"
+    - name: RedHat family | ensure grubby is installed
+      package:
+        name:
+          - grubby
+          - grub2-tools
+        state: present
+      when:
+        - ansible_facts['os_family'] == "RedHat"
+        - kernel_pinned | bool
+
+    - name: RedHat family | check for BLS loader entries (classic GRUB2/BLS boot vs UKI-only)
+      shell: "ls /boot/loader/entries/*.conf 2>/dev/null | wc -l"
+      register: bls_entries_redhat
+      changed_when: false
+      when:
+        - ansible_facts['os_family'] == "RedHat"
+        - kernel_pinned | bool
+
+    - name: RedHat family | set pinned kernel as default boot entry (classic GRUB2/BLS)
+      command: "/usr/sbin/grubby --set-default /boot/vmlinuz-{{ kernel_uname_target }}"
       changed_when: true
       when:
         - ansible_facts['os_family'] == "RedHat"
         - kernel_pinned | bool
+        - bls_entries_redhat.stdout | trim | int > 0
+
+    # UKI-only RHEL images (no /boot/loader/entries, no grub2-efi-x64) boot via direct
+    # UEFI boot entries, one per kernel, labeled "... <version> (UKI)". BootOrder decides
+    # which one boots - same mechanism as Ubuntu's -fde/UKI kernels.
+    - name: RedHat family | ensure efibootmgr is installed (UKI-only systems)
+      package:
+        name: efibootmgr
+        state: present
+      when:
+        - ansible_facts['os_family'] == "RedHat"
+        - kernel_pinned | bool
+        - bls_entries_redhat.stdout | trim | int == 0
+
+    - name: RedHat family | find UEFI boot entry for pinned kernel (UKI-only systems)
+      shell: |
+        efibootmgr | grep -oP "^Boot\K[0-9A-Fa-f]{4}(?=\*?\s.*{{ kernel_uname_target }}\s\(UKI\))" | head -1
+      register: efi_entry_redhat
+      changed_when: false
+      failed_when: efi_entry_redhat.stdout | trim | length == 0
+      when:
+        - ansible_facts['os_family'] == "RedHat"
+        - kernel_pinned | bool
+        - bls_entries_redhat.stdout | trim | int == 0
+
+    - name: RedHat family | move pinned kernel to the front of UEFI BootOrder (UKI-only systems)
+      shell: |
+        num="{{ efi_entry_redhat.stdout | trim }}"
+        order=$(efibootmgr | sed -n 's/^BootOrder: //p')
+        rest=$(echo "$order" | tr ',' '\n' | grep -v "^$num$" | paste -sd, -)
+        new="$num${rest:+,$rest}"
+        if [ "$order" = "$new" ]; then
+          echo UNCHANGED
+        else
+          efibootmgr -o "$new" >/dev/null && echo CHANGED
+        fi
+      register: efi_bootorder_redhat
+      changed_when: efi_bootorder_redhat.stdout | trim == 'CHANGED'
+      when:
+        - ansible_facts['os_family'] == "RedHat"
+        - kernel_pinned | bool
+        - bls_entries_redhat.stdout | trim | int == 0
 
     - name: RedHat family | check if reboot is required (needs-restarting -r)
       command: needs-restarting -r
