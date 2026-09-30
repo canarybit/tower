@@ -23,9 +23,8 @@ vm ansible_host=<PUBLIC_IP>
 
 | Variable | Default | Description |
 |---|---|---|
-| `kernel_update_enabled` | | Set to `true` to run the kernel update. |
-| `kernel_version` | empty | Empty = update to the latest kernel. Set a value to pin that specific kernel (format per OS below). |
-| `kernel_flavor` | `generic` (Ubuntu) / `default` (SUSE) | Kernel flavor, e.g. `azure`, `aws`, `gcp`. Not used on RHEL. |
+| `kernel_version` | empty | Empty = update to the latest kernel. Set a value to pin that specific kernel (format per OS below). The pinned version must be newer than the currently running kernel — the playbook refuses to downgrade or reinstall the same version. |
+| `kernel_flavor` | `generic` (Ubuntu) / `default` (SUSE) | Kernel flavor, e.g. `azure`, `azure-fde`, `aws`, `gcp`. Not used on RHEL. |
 | `kernel_extra_packages` | `[]` | Extra packages to install alongside a pinned kernel (Ubuntu/Debian only). |
 | `reboot_after_update` | `true` | Reboot when the running kernel needs to change. |
 | `run_attestation` | | Set to `true` to run attestation after the reboot. |
@@ -38,19 +37,17 @@ When `kernel_version` is not set, the playbook updates to the latest kernel avai
 ansible-playbook -i inventory.ini kernel-update.yml \
   -u <CVM_USERNAME> \
   --private-key /path/to/id_rsa \
-  -e kernel_update_enabled=true \
   -e run_attestation=true
 ```
 
 ## Specific kernel version
 
-When `kernel_version` is set, the playbook installs only that kernel, makes it the default boot entry, reboots into it, and verifies the running kernel matches.
+When `kernel_version` is set, the playbook installs only that kernel, makes it the default boot entry, reboots into it, and verifies the running kernel matches. The requested version must be newer than what's currently running — the play fails immediately, before any package changes, if it isn't.
 
 ```bash
 ansible-playbook -i inventory.ini kernel-update.yml \
   -u <CVM_USERNAME> \
   --private-key /path/to/id_rsa \
-  -e kernel_update_enabled=true \
   -e kernel_version=<PACKAGE_VERSION> \
   -e run_attestation=true
 ```
@@ -66,15 +63,32 @@ ansible-playbook -i inventory.ini kernel-update.yml \
 Examples:
 
 ```bash
-# Ubuntu on Azure
+# Ubuntu on Azure, plain kernel
 -e kernel_version=6.17.0-1018 -e kernel_flavor=azure
 
+# Ubuntu on Azure, confidential VM / disk-encrypted (UKI) kernel
+-e kernel_version=6.17.0-1022 -e kernel_flavor=azure-fde
+
 # RHEL
--e kernel_version=5.14.0-362.8.1.el9_3
+-e kernel_version=5.14.0-687.13.1.el9_8
 
 # SUSE
 -e kernel_version=5.14.21-150500.55.65.1
 ```
+
+## Behavior
+
+- **No `kernel_version`:** updates to the latest kernel. On RHEL this runs a full package update. Reboots only if the OS reports a reboot is required.
+- **`kernel_version` set:**
+  - Refuses to proceed unless the requested version is newer than the currently running kernel.
+  - Installs only the requested kernel (no full system update on RHEL).
+  - Sets it as the default boot entry so the VM boots it instead of the newest installed kernel — see "Boot mechanism" below.
+  - Reboots if the running kernel differs from the target.
+  - Fails the run if the VM does not come back on the requested kernel.
+- After a reboot, Ansible waits for SSH to return before running attestation.
+- On Ubuntu, `unattended-upgrades` is paused during the run, and `needrestart` is forced non-interactive to avoid hangs.
+- The first task prints which mode was selected (`Updating to latest kernel` or `Pinning kernel to ...`). Check this line if the result is not what you expected.
+
 
 ## Finding available kernel versions
 
