@@ -24,6 +24,24 @@ variable "cvm_ssh_pubkey" {
   type = string
 }
 
+variable "cvm_platform" {
+  description = <<-EOT
+    Type of Confidential CPU hardware platform
+    cvm_platform = {
+      cpu     - CPU hardware type: ['snp', 'tdx']
+    }
+  EOT
+
+  type = object({
+    cpu     = string
+  })
+
+  validation {
+    condition     = contains(["snp", "tdx"], var.cvm_platform.cpu)
+    error_message = "The value has to be one of the following: ['snp', 'tdx']"
+  }
+}
+
 variable "cvm_size" {
   description = "Supported sizes are `Standard_DC*` or `Standard_EC*` series"
   type = string

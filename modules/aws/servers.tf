@@ -24,9 +24,8 @@ resource "aws_instance" "cvm" {
     delete_on_termination = true
   }
 
-  // TODO: infer from size instead
   cpu_options {
-    amd_sev_snp = strcontains(var.remote_attestation.environments, "snp") ? "enabled" : null // Enable AMD SEV-SNP
+    amd_sev_snp = var.cvm_platform.cpu == "snp" ? "enabled" : null // Enable AMD SEV-SNP
   }
 
   # Enable ssh connection, create a file containing the cbtoken and launch the script

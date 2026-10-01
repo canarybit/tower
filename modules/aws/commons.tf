@@ -6,7 +6,7 @@ module "commons" {
 
   cvm_name     = var.cvm_name
   cvm_username = var.cvm_username
-  cvm_platform = var.cvm_cpu_platform.type
+  cvm_platform = var.cvm_platform.cpu
 
   cvm_annotations = var.cvm_annotations
 
