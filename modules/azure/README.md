@@ -77,6 +77,7 @@ No modules.
 | <a name="input_cvm_disk_size_gb"></a> [cvm\_disk\_size\_gb](#input\_cvm\_disk\_size\_gb) | CVM Disk size | `string` | `"30"` | no |
 | <a name="input_cvm_name"></a> [cvm\_name](#input\_cvm\_name) | Confidential VM name | `string` | n/a | yes |
 | <a name="input_cvm_os"></a> [cvm\_os](#input\_cvm\_os) | URN of the OS image | `string` | `"canonical:ubuntu-24_04-lts:cvm:latest"` | no |
+| <a name="input_os_name"></a> [os\_name](#input\_os\_name) | Operating system family used to configure OS-specific bootstrap steps | `string` | `"rhel"` | no |
 | <a name="input_cvm_ports_open"></a> [cvm\_ports\_open](#input\_cvm\_ports\_open) | List of CVM open network ports | `list(string)` | `[]` | no |
 | <a name="input_cvm_size"></a> [cvm\_size](#input\_cvm\_size) | Supported sizes are `Standard_DC*` or `Standard_EC*` series | `string` | n/a | yes |
 | <a name="input_cvm_ssh_enabled"></a> [cvm\_ssh\_enabled](#input\_cvm\_ssh\_enabled) | Enable/Disable SSH connection | `bool` | `true` | no |

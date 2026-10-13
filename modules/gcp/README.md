@@ -56,6 +56,7 @@ No modules.
 | [google_compute_network.cvm](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_network) | resource |
 | [local_sensitive_file.signing-key](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/sensitive_file) | resource |
 | [null_resource.attestation](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [null_resource.cloud_init_reboot](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [null_resource.signing-key-fingerprint](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [tls_private_key.rsa-4096](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/private_key) | resource |
 | [http_http.cblogin](https://registry.terraform.io/providers/hashicorp/http/latest/docs/data-sources/http) | data source |
@@ -72,6 +73,7 @@ No modules.
 | <a name="input_cvm_disk_size_gb"></a> [cvm\_disk\_size\_gb](#input\_cvm\_disk\_size\_gb) | CVM Disk size | `string` | `"0"` | no |
 | <a name="input_cvm_name"></a> [cvm\_name](#input\_cvm\_name) | Confidential VM name | `string` | n/a | yes |
 | <a name="input_cvm_os"></a> [cvm\_os](#input\_cvm\_os) | URI of the OS image | `string` | `"ubuntu-2404-lts-amd64"` | no |
+| <a name="input_os_name"></a> [os\_name](#input\_os\_name) | Operating system family used to configure OS-specific bootstrap steps | `string` | `"ubuntu"` | no |
 | <a name="input_cvm_ports_open"></a> [cvm\_ports\_open](#input\_cvm\_ports\_open) | List of CVM open network ports | `list(string)` | `[]` | no |
 | <a name="input_cvm_size"></a> [cvm\_size](#input\_cvm\_size) | Supported VM sizes: N2D for AMD SNP or C3 for Intel | `string` | n/a | yes |
 | <a name="input_cvm_ssh_enabled"></a> [cvm\_ssh\_enabled](#input\_cvm\_ssh\_enabled) | Enable/Disable SSH connection | `bool` | `true` | no |
