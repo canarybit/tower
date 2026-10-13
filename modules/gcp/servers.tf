@@ -73,14 +73,32 @@ resource "google_compute_instance" "cvm" {
     destination = "/home/${var.cvm_username}/signing-key.pem"
     content = tls_private_key.rsa-4096.private_key_pem_pkcs8
   }
-  provisioner "remote-exec" {
-    inline = [
-      "cloud-init status --wait",
-      "sudo /etc/canarybit/launch-cb-inspector-client",
-    ]
-  }
 
   lifecycle {
     ignore_changes = [metadata]
+  }
+}
+
+resource "null_resource" "attestation" {
+  count = var.remote_attestation != null ? 1 : 0
+
+  depends_on = [google_compute_instance.cvm]
+
+  triggers = {
+    instance_id = google_compute_instance.cvm.id
+  }
+
+  connection {
+    type        = "ssh"
+    user        = var.cvm_username
+    private_key = file(trimsuffix(var.cvm_ssh_pubkey, ".pub"))
+    host        = google_compute_instance.cvm.network_interface[0].access_config[0].nat_ip
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "if command -v cloud-init >/dev/null 2>&1; then cloud-init status --wait; fi",
+      "sudo /etc/canarybit/launch-cb-inspector-client",
+    ]
   }
 }
