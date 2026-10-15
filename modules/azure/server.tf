@@ -53,14 +53,33 @@ resource "azurerm_linux_virtual_machine" "cvm" {
     destination = "/home/${var.cvm_username}/signing-key.pem"
     content = module.commons.signing_key_pem
   }
-  provisioner "remote-exec" {
-    inline = [
-      "cloud-init status --wait",
-      "sudo /etc/canarybit/launch-cb-inspector-client",
-    ]
-  }
 
   lifecycle {
     ignore_changes = [user_data]
   }
 }
+
+resource "null_resource" "attestation" {
+  count = var.remote_attestation != null ? 1 : 0
+
+  depends_on = [azurerm_linux_virtual_machine.cvm]
+
+  triggers = {
+    instance_id = azurerm_linux_virtual_machine.cvm.id
+  }
+
+  connection {
+    type        = "ssh"
+    user        = var.cvm_username
+    private_key = file(trimsuffix(var.cvm_ssh_pubkey, ".pub"))
+    host        = azurerm_linux_virtual_machine.cvm.public_ip_address
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "if command -v cloud-init >/dev/null 2>&1; then cloud-init status --wait; fi",
+      "sudo /etc/canarybit/launch-cb-inspector-client",
+    ]
+  }
+}
+

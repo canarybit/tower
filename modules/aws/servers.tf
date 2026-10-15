@@ -43,14 +43,33 @@ resource "aws_instance" "cvm" {
     destination = "/home/${var.cvm_username}/signing-key.pem"
     content = module.commons.signing_key_pem
   }
-  provisioner "remote-exec" {
-    inline = [
-      "cloud-init status --wait",
-      "sudo /etc/canarybit/launch-cb-inspector-client",
-    ]
-  }
 
   lifecycle {
     ignore_changes = [user_data]
   }
 }
+
+resource "null_resource" "attestation" {
+  count = var.remote_attestation != null ? 1 : 0
+
+  depends_on = [aws_instance.cvm]
+
+  triggers = {
+    instance_id = aws_instance.cvm.id
+  }
+
+  connection {
+    type        = "ssh"
+    user        = var.cvm_username
+    private_key = file(trimsuffix(var.cvm_ssh_pubkey, ".pub"))
+    host        = aws_instance.cvm.public_ip
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "if command -v cloud-init >/dev/null 2>&1; then cloud-init status --wait; fi",
+      "sudo /etc/canarybit/launch-cb-inspector-client",
+    ]
+  }
+}
+
