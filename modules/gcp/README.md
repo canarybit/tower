@@ -38,12 +38,13 @@ Users of Terragrunt can achieve similar results by using modules provided in the
 |------|---------|
 | <a name="provider_google"></a> [google](#provider\_google) | >= 7.0 |
 | <a name="provider_http"></a> [http](#provider\_http) | n/a |
+| <a name="provider_null"></a> [null](#provider\_null) | n/a |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_commons"></a> [commons](#module\_commons) | ../../../tower-commons/modules/commons | n/a |
+| <a name="module_commons"></a> [commons](#module\_commons) | https://canarybit-public-binaries.s3.eu-west-1.amazonaws.com/tower-commons/v0.1.0/tower-commons.zip | n/a |
 
 ## Resources
 
@@ -53,6 +54,7 @@ Users of Terragrunt can achieve similar results by using modules provided in the
 | [google_compute_firewall.ssh](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
 | [google_compute_instance.cvm](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_instance) | resource |
 | [google_compute_network.cvm](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_network) | resource |
+| [null_resource.attestation](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [http_http.my-public-ip](https://registry.terraform.io/providers/hashicorp/http/latest/docs/data-sources/http) | data source |
 
 ## Inputs
