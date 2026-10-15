@@ -58,10 +58,13 @@ module "confidential-vm" {
   cvm_ssh_enabled = var.allow_ssh
   cvm_ssh_pubkey = "~/.ssh/id_rsa.pub"
   cvm_size = "Standard_DC2as_v5"
-  
+
+  cvm_platform = {
+    cpu = "snp"
+  }
+
   // Remote Attestation
   remote_attestation = {
-    environments = "snp"
     frequency = "daily"
     custom_policy_file = "./my-policy.rego"
   }
