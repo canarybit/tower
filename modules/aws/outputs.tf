@@ -3,7 +3,7 @@ output "cvm-info" {
   value = <<EOF
 
   Name:           ${var.cvm_name}
-  Size/Family:    ${var.cvm_size} (Confidential) 
+  Size/Family:    ${var.cvm_size} (Confidential)
   OS:             ${var.cvm_os}
   Disk:           ${var.cvm_disk_size_gb} GB
   Public IP:      ${aws_instance.cvm.public_ip}
@@ -11,19 +11,7 @@ output "cvm-info" {
   Username:       ${var.cvm_username}
 
   EnclaveID / Signing Key Fingerprint:
-    ${data.local_file.signing-key-fingerprint.content}
+    ${module.commons.enclave_id}
 
   EOF
 }
-
-/* 
-output "cloud-init" {
-  description = "The cloud-init configuration of the running CVM instance(s)"
-  sensitive = true
-  value = <<EOF
-  
-  ${aws_instance.cvm.user_data_base64}
-
-  EOF
-}
-*/

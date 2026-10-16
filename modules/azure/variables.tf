@@ -19,9 +19,27 @@ variable "cvm_name" {
   type = string
 }
 
-variable "cvm_ssh_pubkey" { 
+variable "cvm_ssh_pubkey" {
   description = "Path to the public key used for SSH connection"
   type = string
+}
+
+variable "cvm_platform" {
+  description = <<-EOT
+    Type of Confidential CPU hardware platform
+    cvm_platform = {
+      cpu     - CPU hardware type: ['snp', 'tdx']
+    }
+  EOT
+
+  type = object({
+    cpu     = string
+  })
+
+  validation {
+    condition     = contains(["snp", "tdx"], var.cvm_platform.cpu)
+    error_message = "The value has to be one of the following: ['snp', 'tdx']"
+  }
 }
 
 variable "cvm_size" {
@@ -39,27 +57,28 @@ variable "az_resource_group_name" {
   type = string
 }
 
-variable "remote_attestation" {
-  description = "Enable CanaryBit Remote Attestation"
-  type = object({
-    environments = string
-    cb_inspector_url = optional(string, "https://api.inspector.confidentialcloud.io")
-    cb_inspector_client_version = optional(string, "0.1.0")
-    cbcli_version = optional(string, "0.2.6")
-    signing_key = optional(string)
-    custom_policy_file = optional(string)
-    frequency = optional(string, "daily")
-  })
-
-  validation {
-    condition = contains(["snp", "tdx"], var.remote_attestation.environments)
-    error_message = "The value has to be one of the following: ['snp', 'tdx']"
-  }
-}
-
 ///////////////////////
 // DEFAULTS
 ///////////////////////
+
+variable "remote_attestation" {
+  description = "Enable CanaryBit Remote Attestation"
+  type = any
+}
+
+variable "cloud_init" {
+  description = "Custom cloud-init configuration"
+  type = object({
+    custom_path = optional(string)
+    extra_args  = optional(map(any), {})
+  })
+  default = {}
+
+  validation {
+    condition     = !(var.cloud_init.custom_path == null && length(var.cloud_init.extra_args) > 0)
+    error_message = "A custom_path is required when using extra_args in cloud_init"
+  }
+}
 
 variable "az_region" {
   description = "Azure Region. Defaults to the AZ Resource Group location."
@@ -105,6 +124,6 @@ variable "cvm_ssh_source_ip" {
 
 variable "cvm_annotations" {
   description = "Custom annotations in \"<Key>=<Value>\" format"
-  type = map
+  type = map(any)
   default = {}
 }
