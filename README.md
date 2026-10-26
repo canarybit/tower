@@ -41,7 +41,7 @@ Currently, CanaryBit Tower supports the following platforms and public cloud pro
 |------------------|-----|-------|-----|
 | Ubuntu           | Supported | Supported | Supported |
 | Red Hat (RHEL)   | Supported | Supported | Not by default* |
-| SUSE             | Supported | Supported | Not by default* |
+| SUSE             | Supported | Tech preview | Not by default* |
 
 * GCP's Red Hat and SUSE images do not include `cloud-init`, which Tower requires for its setup. To use either OS on GCP, provide a custom image with `cloud-init` installed.
 
