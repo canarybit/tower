@@ -82,7 +82,7 @@ variable "cloud_init" {
 variable "cvm_os" {
   description = "AMI of the OS image"
   type = string
-  default = "ami-09040d770ffe2224f" // Canonical, Ubuntu, 24.04 LTS, amd64 noble image build on 2024-04-23
+  default = "ami-008f67e1a087a7449" // Canonical, Ubuntu, 24.04 LTS, amd64 noble image build on 2024-04-23
 }
 
 variable "os_name" {
@@ -91,8 +91,8 @@ variable "os_name" {
   default     = "ubuntu"
 
   validation {
-    condition     = contains(["ubuntu", "rhel"], var.os_name)
-    error_message = "The value has to be one of: ubuntu, rhel."
+    condition     = contains(["ubuntu", "rhel", "suse"], var.os_name)
+    error_message = "The value has to be one of: ubuntu, rhel, suse."
   }
 }
 

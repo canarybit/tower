@@ -98,8 +98,8 @@ variable "os_name" {
   default     = "ubuntu"
 
   validation {
-    condition     = contains(["ubuntu", "rhel"], var.os_name)
-    error_message = "The value has to be one of: ubuntu, rhel."
+    condition     = contains(["ubuntu", "rhel", "suse"], var.os_name)
+    error_message = "The value has to be one of: ubuntu, rhel, suse."
   }
 }
 
