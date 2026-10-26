@@ -80,6 +80,7 @@ Users of Terragrunt can achieve similar results by using modules provided in the
 | <a name="input_cvm_ssh_pubkey"></a> [cvm\_ssh\_pubkey](#input\_cvm\_ssh\_pubkey) | Path to the public key used for SSH connection | `string` | n/a | yes |
 | <a name="input_cvm_ssh_source_ip"></a> [cvm\_ssh\_source\_ip](#input\_cvm\_ssh\_source\_ip) | Source IP for SSH connection | `string` | `null` | no |
 | <a name="input_cvm_username"></a> [cvm\_username](#input\_cvm\_username) | CVM Username for SSH login | `string` | `"tower"` | no |
+| <a name="input_os_name"></a> [os\_name](#input\_os\_name) | Operating system family used to configure OS-specific bootstrap steps | `string` | `"ubuntu"` | no |
 | <a name="input_remote_attestation"></a> [remote\_attestation](#input\_remote\_attestation) | Enable CanaryBit Remote Attestation | `any` | n/a | yes |
 
 ## Outputs

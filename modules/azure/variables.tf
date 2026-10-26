@@ -92,6 +92,18 @@ variable "cvm_os" {
   default = "canonical:ubuntu-24_04-lts:cvm:latest"
 }
 
+variable "os_name" {
+  description = "Operating system family used to configure OS-specific bootstrap steps"
+  type        = string
+  default     = "ubuntu"
+
+  validation {
+    condition     = contains(["ubuntu", "rhel", "suse"], var.os_name)
+    error_message = "The value has to be one of: ubuntu, rhel, suse."
+  }
+}
+
+
 variable "cvm_username" {
   description = "CVM Username for SSH login"
   type = string
