@@ -44,7 +44,7 @@ Users of Terragrunt can achieve similar results by using modules provided in the
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_commons"></a> [commons](#module\_commons) | https://canarybit-public-binaries.s3.eu-west-1.amazonaws.com/tower-commons/v0.1.0/tower-commons.zip | n/a |
+| <a name="module_commons"></a> [commons](#module\_commons) | https://canarybit-public-binaries.s3.eu-west-1.amazonaws.com/tower-commons/v0.1.1/tower-commons.zip | n/a |
 
 ## Resources
 
