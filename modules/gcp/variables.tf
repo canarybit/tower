@@ -28,12 +28,12 @@ variable "cvm_platform" {
   description = <<-EOT
     Type of Confidential CPU hardware platform
     cvm_platform = {
-      cpu     - CPU hardware type: ['snp', 'tdx']
+      cpu = CPU hardware type: ['snp', 'tdx']
     }
   EOT
 
   type = object({
-    type     = string
+    cpu = string
   })
 
   validation {
@@ -79,6 +79,17 @@ variable "cvm_os" {
   description = "URI of the OS image"
   type = string
   default = "ubuntu-2404-lts-amd64"
+}
+
+variable "os_name" {
+  description = "Operating system family used to configure OS-specific bootstrap steps"
+  type        = string
+  default     = "ubuntu"
+
+  validation {
+    condition     = contains(["ubuntu", "rhel"], var.os_name)
+    error_message = "The value has to be one of: ubuntu, rhel."
+  }
 }
 
 variable "cvm_username" {

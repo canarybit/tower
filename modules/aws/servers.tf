@@ -63,13 +63,17 @@ resource "null_resource" "attestation" {
     user        = var.cvm_username
     private_key = file(trimsuffix(var.cvm_ssh_pubkey, ".pub"))
     host        = aws_instance.cvm.public_ip
+    timeout     = "10m"
   }
 
   provisioner "remote-exec" {
     inline = [
-      "if command -v cloud-init >/dev/null 2>&1; then cloud-init status --wait; fi",
-      "sudo /etc/canarybit/launch-cb-inspector-client",
+      "echo 'Waiting for cloud-init'",
+      "if command -v cloud-init >/dev/null 2>&1; then sudo timeout 20m cloud-init status --wait --long; else echo 'cloud-init is not installed; skipping wait'; fi",
+      "sudo test -x /etc/canarybit/launch-cb-inspector-client || { echo 'Attestation launcher is missing; check cloud-init status and logs' >&2; exit 1; }",
+      "echo 'Running attestation launcher'",
+      "sudo timeout 10m /etc/canarybit/launch-cb-inspector-client",
+      "echo 'Attestation launcher finished'",
     ]
   }
 }
-
