@@ -1,6 +1,6 @@
 output "cvm-info" {
   description = "Details of the running CVM instance(s)"
-  value = <<EOF
+  value       = <<EOF
 
   Name:           ${var.cvm_name}
   Size/Family:    ${var.cvm_size} (Confidential)
@@ -24,8 +24,8 @@ output "cvm-info" {
 
 output "cloud-init" {
   description = "The cloud-init configuration of the running CVM instance(s)"
-  sensitive = true
-  value = <<EOF
+  sensitive   = true
+  value       = <<EOF
 
   ${azurerm_linux_virtual_machine.cvm.user_data}
 

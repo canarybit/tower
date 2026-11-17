@@ -1,6 +1,6 @@
 output "cvm-info" {
   description = "Details of the running CVM instance(s)"
-  value = <<EOF
+  value       = <<EOF
 
   Name:           ${var.cvm_name}
   Size/Family:    ${var.cvm_size} (Confidential)

@@ -17,26 +17,26 @@ provider "azurerm" {
 
 variable "cb_username" {
   description = "CanaryBit username"
-  type = string
-  sensitive = true
+  type        = string
+  sensitive   = true
 }
 
 variable "cb_password" {
   description = "CanaryBit password"
-  type = string
-  sensitive = true
+  type        = string
+  sensitive   = true
 }
 
 variable "allow_ssh" {
   description = "Allow/Deny SSH connection"
-  type = bool
-  default = true
+  type        = bool
+  default     = true
 }
 
 variable "n_of_cvm" {
   description = "Number of Confidential VMs to provision"
-  type = number
-  default = 1
+  type        = number
+  default     = 1
 }
 
 // ========================
@@ -44,7 +44,7 @@ variable "n_of_cvm" {
 // ========================
 
 module "confidential-vm" {
-  source = "canarybit/tower/canarybit//modules/azure"
+  source      = "canarybit/tower/canarybit//modules/azure"
   cb_username = var.cb_username
   cb_password = var.cb_password
 
@@ -52,11 +52,11 @@ module "confidential-vm" {
   az_resource_group_name = "continuoustesting1932"
 
   // Confidential VM
-  count = var.n_of_cvm
-  cvm_name = "demo-cvm-${count.index}"
+  count           = var.n_of_cvm
+  cvm_name        = "demo-cvm-${count.index}"
   cvm_ssh_enabled = var.allow_ssh
-  cvm_ssh_pubkey = "~/.ssh/id_rsa.pub"
-  cvm_size = "Standard_DC2as_v5"
+  cvm_ssh_pubkey  = "~/.ssh/id_rsa.pub"
+  cvm_size        = "Standard_DC2as_v5"
 
   cvm_platform = {
     cpu = "snp"
@@ -64,7 +64,7 @@ module "confidential-vm" {
 
   // Remote Attestation
   remote_attestation = {
-    frequency = "daily"
+    frequency          = "daily"
     custom_policy_file = "./my-policy.rego"
   }
 }
