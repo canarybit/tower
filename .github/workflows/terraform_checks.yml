@@ -25,6 +25,9 @@ jobs:
       fail-fast: false
       matrix:
         dir:
+          - examples/aws
+          - examples/azure
+          - examples/gcp
           - modules/aws
           - modules/azure
           - modules/gcp
