@@ -4,24 +4,24 @@
 
 variable "cb_username" {
   description = "CanaryBit username"
-  type = string
-  sensitive = true
+  type        = string
+  sensitive   = true
 }
 
 variable "cb_password" {
   description = "CanaryBit password"
-  type = string
-  sensitive = true
+  type        = string
+  sensitive   = true
 }
 
 variable "cvm_name" {
   description = "Confidential VM name"
-  type = string
+  type        = string
 }
 
 variable "cvm_ssh_pubkey" {
   description = "Path to the public key used for SSH connection"
-  type = string
+  type        = string
 }
 
 variable "cvm_platform" {
@@ -33,7 +33,7 @@ variable "cvm_platform" {
   EOT
 
   type = object({
-    cpu     = string
+    cpu = string
   })
 
   validation {
@@ -44,17 +44,17 @@ variable "cvm_platform" {
 
 variable "cvm_size" {
   description = "Supported sizes are `Standard_DC*` or `Standard_EC*` series"
-  type = string
+  type        = string
 
   validation {
-    condition = length(regexall("^Standard_[D,E]C+", var.cvm_size)) > 0
+    condition     = length(regexall("^Standard_[D,E]C+", var.cvm_size)) > 0
     error_message = "Valid values are Standard_DC* or Standard_EC* series"
   }
 }
 
 variable "az_resource_group_name" {
   description = "Azure Resource Group Name"
-  type = string
+  type        = string
 }
 
 ///////////////////////
@@ -63,7 +63,7 @@ variable "az_resource_group_name" {
 
 variable "remote_attestation" {
   description = "Enable CanaryBit Remote Attestation"
-  type = any
+  type        = any
 }
 
 variable "cloud_init" {
@@ -82,48 +82,48 @@ variable "cloud_init" {
 
 variable "az_region" {
   description = "Azure Region. Defaults to the AZ Resource Group location."
-  type = string
-  default = null
+  type        = string
+  default     = null
 }
 
 variable "cvm_os" {
   description = "URN of the OS image"
-  type = string
-  default = "canonical:ubuntu-24_04-lts:cvm:latest"
+  type        = string
+  default     = "canonical:ubuntu-24_04-lts:cvm:latest"
 }
 
 variable "cvm_username" {
   description = "CVM Username for SSH login"
-  type = string
-  default = "tower"
+  type        = string
+  default     = "tower"
 }
 
 variable "cvm_disk_size_gb" {
   description = "CVM Disk size"
-  type = string
-  default = "30"
+  type        = string
+  default     = "30"
 }
 
 variable "cvm_ports_open" {
   description = "List of CVM open network ports"
-  type = list(string)
-  default = []
+  type        = list(string)
+  default     = []
 }
 
 variable "cvm_ssh_enabled" {
   description = "Enable/Disable SSH connection"
-  type = bool
-  default = true
+  type        = bool
+  default     = true
 }
 
 variable "cvm_ssh_source_ip" {
   description = "Source IP for SSH connection"
-  type = string
-  default = null
+  type        = string
+  default     = null
 }
 
 variable "cvm_annotations" {
   description = "Custom annotations in \"<Key>=<Value>\" format"
-  type = map(any)
-  default = {}
+  type        = map(any)
+  default     = {}
 }

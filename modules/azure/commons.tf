@@ -14,6 +14,6 @@ module "commons" {
 
   cloud_init_packages = []
 
-  cloud_init = var.cloud_init
+  cloud_init      = var.cloud_init
   use_provisioner = true
 }
