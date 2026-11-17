@@ -44,7 +44,7 @@ variable "n_of_cvm" {
 // =====================
 
 module "confidential-vm" {
-  source      = "canarybit/tower/canarybit//modules/gcp"
+  source      = "../../modules/gcp"
   cb_username = var.cb_username
   cb_password = var.cb_password
 
@@ -71,5 +71,5 @@ module "confidential-vm" {
 // ========================
 
 output "cvm-info" {
-  value = module.confidential-vm.*.cvm-info
+  value = module.confidential-vm[*].cvm-info
 }

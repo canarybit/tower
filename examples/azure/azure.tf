@@ -2,7 +2,8 @@ terraform {
   required_version = ">= 1.0"
   required_providers {
     azurerm = {
-      source = "hashicorp/azurerm"
+      source  = "hashicorp/azurerm"
+      version = ">= 4.50"
     }
   }
 }
@@ -44,7 +45,7 @@ variable "n_of_cvm" {
 // ========================
 
 module "confidential-vm" {
-  source      = "canarybit/tower/canarybit//modules/azure"
+  source      = "../../modules/azure"
   cb_username = var.cb_username
   cb_password = var.cb_password
 
@@ -74,5 +75,5 @@ module "confidential-vm" {
 // ========================
 
 output "cvm-info" {
-  value = module.confidential-vm.*.cvm-info
+  value = module.confidential-vm[*].cvm-info
 }
